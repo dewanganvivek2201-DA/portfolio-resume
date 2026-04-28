@@ -1,0 +1,688 @@
+import { useState, useEffect, useRef } from "react";
+import {
+  LineChart, Line, BarChart, Bar, AreaChart, Area,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, ComposedChart, PieChart, Pie, Cell,
+  RadialBarChart, RadialBar, ReferenceLine
+} from "recharts";
+
+// ─── REAL DATA ──────────────────────────────────────────────────────────────
+
+const roadsData = [
+  { year: "2013-14", fy: 2013, nhTotal: 91287, nhBuilt: 4260, speedKmDay: 11.6, fourLane: 18278, highSpeed: 93, budget: 278 },
+  { year: "2014-15", fy: 2014, nhTotal: 97991, nhBuilt: 7000, speedKmDay: 16.5, fourLane: 19500, highSpeed: 150, budget: 350 },
+  { year: "2015-16", fy: 2015, nhTotal: 100475, nhBuilt: 8231, speedKmDay: 22.5, fourLane: 21000, highSpeed: 280, budget: 550 },
+  { year: "2016-17", fy: 2016, nhTotal: 114158, nhBuilt: 8231, speedKmDay: 22.5, fourLane: 23000, highSpeed: 450, budget: 649 },
+  { year: "2017-18", fy: 2017, nhTotal: 122434, nhBuilt: 9829, speedKmDay: 26.9, fourLane: 25000, highSpeed: 610, budget: 710 },
+  { year: "2018-19", fy: 2018, nhTotal: 132500, nhBuilt: 10855, speedKmDay: 29.7, fourLane: 28000, highSpeed: 750, budget: 830 },
+  { year: "2019-20", fy: 2019, nhTotal: 137625, nhBuilt: 10237, speedKmDay: 28.0, fourLane: 31000, highSpeed: 900, budget: 1115 },
+  { year: "2020-21", fy: 2020, nhTotal: 141190, nhBuilt: 13327, speedKmDay: 36.5, fourLane: 35000, highSpeed: 1100, budget: 1082 },
+  { year: "2021-22", fy: 2021, nhTotal: 145240, nhBuilt: 10457, speedKmDay: 28.6, fourLane: 39000, highSpeed: 1450, budget: 1991 },
+  { year: "2022-23", fy: 2022, nhTotal: 145980, nhBuilt: 10331, speedKmDay: 28.3, fourLane: 42000, highSpeed: 1800, budget: 2400 },
+  { year: "2023-24", fy: 2023, nhTotal: 146145, nhBuilt: 12349, speedKmDay: 33.8, fourLane: 45000, highSpeed: 2200, budget: 2780 },
+  { year: "2024-25", fy: 2024, nhTotal: 146204, nhBuilt: 10421, speedKmDay: 34.0, fourLane: 45947, highSpeed: 2474, budget: 2720 },
+];
+
+const railData = [
+  { year: "2013-14", fy: 2013, electrifiedPct: 38, cumElec: 21801, newTrack: 1520, budget: 654, freight: 1051, vandeBharat: 0 },
+  { year: "2014-15", fy: 2014, electrifiedPct: 40, cumElec: 23301, newTrack: 1520, budget: 1010, freight: 1095, vandeBharat: 0 },
+  { year: "2015-16", fy: 2015, electrifiedPct: 42, cumElec: 24901, newTrack: 1600, budget: 1200, freight: 1101, vandeBharat: 0 },
+  { year: "2016-17", fy: 2016, electrifiedPct: 45, cumElec: 26901, newTrack: 2000, budget: 1310, freight: 1107, vandeBharat: 0 },
+  { year: "2017-18", fy: 2017, electrifiedPct: 52, cumElec: 30901, newTrack: 3500, budget: 1400, freight: 1160, vandeBharat: 0 },
+  { year: "2018-19", fy: 2018, electrifiedPct: 58, cumElec: 35901, newTrack: 4000, budget: 1600, freight: 1212, vandeBharat: 0 },
+  { year: "2019-20", fy: 2019, electrifiedPct: 65, cumElec: 41901, newTrack: 3200, budget: 1617, freight: 1232, vandeBharat: 0 },
+  { year: "2020-21", fy: 2020, electrifiedPct: 73, cumElec: 47916, newTrack: 2909, budget: 1552, freight: 1232, vandeBharat: 0 },
+  { year: "2021-22", fy: 2021, electrifiedPct: 80, cumElec: 54282, newTrack: 2909, budget: 2400, freight: 1418, vandeBharat: 0 },
+  { year: "2022-23", fy: 2022, electrifiedPct: 90, cumElec: 59619, newTrack: 5243, budget: 2401, freight: 1479, vandeBharat: 68 },
+  { year: "2023-24", fy: 2023, electrifiedPct: 94, cumElec: 62619, newTrack: 4112, budget: 2550, freight: 1588, vandeBharat: 102 },
+  { year: "2024-25", fy: 2024, electrifiedPct: 97, cumElec: 65829, newTrack: 3433, budget: 2650, freight: 1617, vandeBharat: 136 },
+];
+
+const airportData = [
+  { year: "2014", fy: 2014, airports: 74, newAdded: 0, passengers: 61, budget: 25, udanRoutes: 0, statesConnected: 28 },
+  { year: "2015", fy: 2015, airports: 82, newAdded: 8, passengers: 81, budget: 31, udanRoutes: 0, statesConnected: 28 },
+  { year: "2016", fy: 2016, airports: 90, newAdded: 8, passengers: 100, budget: 45, udanRoutes: 0, statesConnected: 29 },
+  { year: "2017", fy: 2017, airports: 103, newAdded: 13, passengers: 117, budget: 52, udanRoutes: 45, statesConnected: 31 },
+  { year: "2018", fy: 2018, airports: 112, newAdded: 9, passengers: 139, budget: 73, udanRoutes: 130, statesConnected: 33 },
+  { year: "2019", fy: 2019, airports: 116, newAdded: 4, passengers: 154, budget: 88, udanRoutes: 220, statesConnected: 34 },
+  { year: "2020", fy: 2020, airports: 121, newAdded: 5, passengers: 52, budget: 72, udanRoutes: 310, statesConnected: 35 },
+  { year: "2021", fy: 2021, airports: 130, newAdded: 9, passengers: 88, budget: 80, udanRoutes: 380, statesConnected: 36 },
+  { year: "2022", fy: 2022, airports: 141, newAdded: 11, passengers: 147, budget: 91, udanRoutes: 430, statesConnected: 37 },
+  { year: "2023", fy: 2023, airports: 148, newAdded: 7, passengers: 153, budget: 110, udanRoutes: 469, statesConnected: 38 },
+  { year: "2024", fy: 2024, airports: 157, newAdded: 9, passengers: 172, budget: 98, udanRoutes: 583, statesConnected: 39 },
+];
+
+const budgetData = [
+  { year: "2013-14", fy: 2013, totalBudget: 1.87, roads: 28, railways: 32, aviation: 3, gdp: 6.4 },
+  { year: "2014-15", fy: 2014, totalBudget: 2.21, roads: 30, railways: 34, aviation: 3, gdp: 7.4 },
+  { year: "2015-16", fy: 2015, totalBudget: 2.65, roads: 31, railways: 33, aviation: 4, gdp: 8.0 },
+  { year: "2016-17", fy: 2016, totalBudget: 3.10, roads: 32, railways: 33, aviation: 4, gdp: 8.3 },
+  { year: "2017-18", fy: 2017, totalBudget: 3.84, roads: 33, railways: 32, aviation: 4, gdp: 6.8 },
+  { year: "2018-19", fy: 2018, totalBudget: 4.56, roads: 33, railways: 32, aviation: 4, gdp: 6.5 },
+  { year: "2019-20", fy: 2019, totalBudget: 4.90, roads: 34, railways: 31, aviation: 4, gdp: 4.0 },
+  { year: "2020-21", fy: 2020, totalBudget: 4.39, roads: 33, railways: 32, aviation: 3, gdp: -6.6 },
+  { year: "2021-22", fy: 2021, totalBudget: 7.50, roads: 34, railways: 32, aviation: 4, gdp: 8.7 },
+  { year: "2022-23", fy: 2022, totalBudget: 10.00, roads: 35, railways: 32, aviation: 4, gdp: 7.2 },
+  { year: "2023-24", fy: 2023, totalBudget: 11.11, roads: 35, railways: 33, aviation: 3, gdp: 8.2 },
+  { year: "2024-25", fy: 2024, totalBudget: 11.21, roads: 35, railways: 33, aviation: 3, gdp: 6.5 },
+];
+
+// ─── COLORS ─────────────────────────────────────────────────────────────────
+const C = {
+  orange: "#FF6B00",
+  green: "#00D68F",
+  blue: "#4D9FFF",
+  red: "#FF4757",
+  purple: "#A855F7",
+  yellow: "#FFD600",
+  bg: "#0A0E1A",
+  card: "#111827",
+  cardBorder: "#1F2937",
+  text: "#F9FAFB",
+  muted: "#9CA3AF",
+  grid: "#1F2937",
+};
+
+const PAGES = ["Overview", "Roads", "Railways", "Airports"];
+const PAGE_COLORS = [C.blue, C.orange, C.green, C.purple];
+const PAGE_ICONS = ["🇮🇳", "🛣️", "🚆", "✈️"];
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+const fmt = (n, unit = "") => {
+  if (Math.abs(n) >= 100000) return `${(n / 100000).toFixed(1)}L${unit}`;
+  if (Math.abs(n) >= 1000) return `${(n / 1000).toFixed(1)}K${unit}`;
+  return `${n}${unit}`;
+};
+
+const pct = (a, b) => `+${(((a - b) / b) * 100).toFixed(0)}%`;
+
+const CustomTooltip = ({ active, payload, label, unit = "" }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{ background: "#1F2937", border: `1px solid ${C.cardBorder}`, borderRadius: 8, padding: "10px 14px", fontSize: 12 }}>
+      <p style={{ color: C.muted, marginBottom: 6, fontWeight: 600 }}>{label}</p>
+      {payload.map((p, i) => (
+        <p key={i} style={{ color: p.color, margin: "2px 0" }}>
+          {p.name}: <span style={{ color: C.text, fontWeight: 700 }}>{typeof p.value === "number" ? p.value.toLocaleString() : p.value}{unit}</span>
+        </p>
+      ))}
+    </div>
+  );
+};
+
+// ─── KPI CARD ─────────────────────────────────────────────────────────────────
+const KpiCard = ({ label, value, sub, color, icon, trend }) => (
+  <div style={{
+    background: C.card, border: `1px solid ${C.cardBorder}`,
+    borderRadius: 12, padding: "18px 20px", flex: 1, minWidth: 160,
+    borderTop: `3px solid ${color}`, position: "relative", overflow: "hidden"
+  }}>
+    <div style={{ position: "absolute", right: 16, top: 14, fontSize: 22, opacity: 0.15 }}>{icon}</div>
+    <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{label}</p>
+    <p style={{ color: color, fontSize: 26, fontWeight: 800, lineHeight: 1, marginBottom: 6 }}>{value}</p>
+    {sub && <p style={{ color: C.muted, fontSize: 11 }}>{sub}</p>}
+    {trend && <p style={{ color: "#00D68F", fontSize: 11, fontWeight: 600, marginTop: 4 }}>{trend}</p>}
+  </div>
+);
+
+// ─── SECTION TITLE ────────────────────────────────────────────────────────────
+const SectionTitle = ({ title, subtitle, color }) => (
+  <div style={{ marginBottom: 16 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+      <div style={{ width: 4, height: 18, background: color, borderRadius: 2 }} />
+      <h3 style={{ color: C.text, fontSize: 14, fontWeight: 700, margin: 0 }}>{title}</h3>
+    </div>
+    {subtitle && <p style={{ color: C.muted, fontSize: 11, marginLeft: 12 }}>{subtitle}</p>}
+  </div>
+);
+
+// ─── INSIGHT BOX ──────────────────────────────────────────────────────────────
+const InsightBox = ({ text, color }) => (
+  <div style={{
+    background: `${color}10`, border: `1px solid ${color}30`,
+    borderLeft: `3px solid ${color}`, borderRadius: 8,
+    padding: "10px 14px", marginTop: 12
+  }}>
+    <p style={{ color: C.muted, fontSize: 11, margin: 0, lineHeight: 1.6 }}>
+      💡 <span style={{ color: C.text, fontWeight: 600 }}>{text}</span>
+    </p>
+  </div>
+);
+
+// ─── YEAR SLICER ─────────────────────────────────────────────────────────────
+const YearSlicer = ({ years, selected, onChange, color }) => (
+  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 20 }}>
+    <button onClick={() => onChange(null)} style={{
+      padding: "5px 12px", borderRadius: 6, fontSize: 11, fontWeight: 700, cursor: "pointer",
+      background: !selected ? color : "transparent",
+      border: `1px solid ${selected ? C.cardBorder : color}`,
+      color: !selected ? "#000" : C.muted, transition: "all 0.2s"
+    }}>All Years</button>
+    {years.map(y => (
+      <button key={y} onClick={() => onChange(y === selected ? null : y)} style={{
+        padding: "5px 10px", borderRadius: 6, fontSize: 11, cursor: "pointer",
+        background: selected === y ? color : "transparent",
+        border: `1px solid ${selected === y ? color : C.cardBorder}`,
+        color: selected === y ? "#000" : C.muted, transition: "all 0.2s", fontWeight: selected === y ? 700 : 400
+      }}>{y}</button>
+    ))}
+  </div>
+);
+
+// ─── PAGE NAV ─────────────────────────────────────────────────────────────────
+const PageNav = ({ active, setActive }) => (
+  <div style={{
+    display: "flex", gap: 0, background: C.card,
+    border: `1px solid ${C.cardBorder}`, borderRadius: 12,
+    overflow: "hidden", marginBottom: 24
+  }}>
+    {PAGES.map((p, i) => (
+      <button key={p} onClick={() => setActive(i)} style={{
+        flex: 1, padding: "12px 8px", border: "none", cursor: "pointer",
+        background: active === i ? PAGE_COLORS[i] : "transparent",
+        color: active === i ? "#000" : C.muted,
+        fontSize: 12, fontWeight: active === i ? 800 : 500,
+        transition: "all 0.25s", display: "flex", alignItems: "center",
+        justifyContent: "center", gap: 6,
+        borderRight: i < PAGES.length - 1 ? `1px solid ${C.cardBorder}` : "none"
+      }}>
+        <span style={{ fontSize: 16 }}>{PAGE_ICONS[i]}</span>
+        <span style={{ display: "none", ["@media (min-width: 640px)"]: { display: "inline" } }}>{p}</span>
+        <span>{p}</span>
+      </button>
+    ))}
+  </div>
+);
+
+// ─── CHART WRAPPER ────────────────────────────────────────────────────────────
+const ChartBox = ({ title, subtitle, children, color, span = 1 }) => (
+  <div style={{
+    background: C.card, border: `1px solid ${C.cardBorder}`,
+    borderRadius: 12, padding: "18px 20px",
+    gridColumn: span > 1 ? `span ${span}` : undefined
+  }}>
+    <SectionTitle title={title} subtitle={subtitle} color={color} />
+    {children}
+  </div>
+);
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PAGE 1 — OVERVIEW
+// ════════════════════════════════════════════════════════════════════════════
+const PageOverview = ({ yearFilter, setYearFilter }) => {
+  const filtered = budgetData.filter(d => !yearFilter || d.year === yearFilter);
+  const latest = budgetData[budgetData.length - 1];
+
+  const pieData = [
+    { name: "Roads", value: 35, color: C.orange },
+    { name: "Railways", value: 33, color: C.green },
+    { name: "Aviation", value: 3, color: C.blue },
+    { name: "Others", value: 29, color: C.purple },
+  ];
+
+  const growthData = budgetData.map(d => ({
+    ...d,
+    roadsVal: +(d.totalBudget * d.roads / 100).toFixed(2),
+    railVal: +(d.totalBudget * d.railways / 100).toFixed(2),
+    aviVal: +(d.totalBudget * d.aviation / 100).toFixed(2),
+  }));
+
+  return (
+    <div>
+      <YearSlicer
+        years={budgetData.map(d => d.year)}
+        selected={yearFilter}
+        onChange={setYearFilter}
+        color={C.blue}
+      />
+
+      {/* KPI Row */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <KpiCard label="Total Infra Budget 2024-25" value="₹11.21L Cr" sub="vs ₹1.87L Cr in 2013-14" color={C.blue} icon="💰" trend="6x growth in a decade" />
+        <KpiCard label="NH Network Growth" value="60%" sub="91,287 → 1,46,204 km" color={C.orange} icon="🛣️" trend="+54,917 km added" />
+        <KpiCard label="Airports Doubled" value="74 → 157" sub="2014 to 2024" color={C.purple} icon="✈️" trend="+112% growth" />
+        <KpiCard label="Rail Electrification" value="38% → 97%" sub="21,801 → 65,829 RKM" color={C.green} icon="⚡" trend="46,900 RKM in 10 years" />
+      </div>
+
+      {/* Charts Grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+        <ChartBox title="Infrastructure Budget Growth" subtitle="₹ Lakh Crore — 2013-14 to 2024-25" color={C.blue} span={2}>
+          <ResponsiveContainer width="100%" height={220}>
+            <AreaChart data={yearFilter ? growthData.filter(d => d.year === yearFilter) : growthData}>
+              <defs>
+                <linearGradient id="gradBlue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={C.blue} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={C.blue} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 10 }} />
+              <YAxis tick={{ fill: C.muted, fontSize: 10 }} />
+              <Tooltip content={<CustomTooltip unit=" L Cr" />} />
+              <Area type="monotone" dataKey="totalBudget" name="Total Budget" stroke={C.blue} fill="url(#gradBlue)" strokeWidth={2} dot={{ fill: C.blue, r: 3 }} />
+              <ReferenceLine y={0} stroke={C.grid} />
+            </AreaChart>
+          </ResponsiveContainer>
+          <InsightBox text="India's infra budget grew 6x in a decade — ₹1.87L Cr in 2013-14 to ₹11.21L Cr in 2024-25. No comparable developing nation matched this pace." color={C.blue} />
+        </ChartBox>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <ChartBox title="Budget Share by Sector (2024-25)" subtitle="% allocation split" color={C.orange}>
+          <ResponsiveContainer width="100%" height={200}>
+            <PieChart>
+              <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={80} dataKey="value" paddingAngle={3}>
+                {pieData.map((e, i) => <Cell key={i} fill={e.color} />)}
+              </Pie>
+              <Tooltip formatter={(v) => `${v}%`} contentStyle={{ background: "#1F2937", border: "none", borderRadius: 8, fontSize: 12 }} />
+              <Legend iconType="circle" iconSize={10} wrapperStyle={{ fontSize: 12, color: C.muted }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartBox>
+
+        <ChartBox title="GDP Growth vs Infra Spending" subtitle="Infrastructure spending drives economic growth" color={C.green}>
+          <ResponsiveContainer width="100%" height={200}>
+            <ComposedChart data={yearFilter ? budgetData.filter(d => d.year === yearFilter) : budgetData}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 9 }} />
+              <YAxis yAxisId="left" tick={{ fill: C.muted, fontSize: 10 }} />
+              <YAxis yAxisId="right" orientation="right" tick={{ fill: C.muted, fontSize: 10 }} />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar yAxisId="left" dataKey="totalBudget" name="Budget (₹L Cr)" fill={C.blue} opacity={0.7} radius={[3, 3, 0, 0]} />
+              <Line yAxisId="right" type="monotone" dataKey="gdp" name="GDP Growth %" stroke={C.green} strokeWidth={2} dot={{ fill: C.green, r: 3 }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+          <InsightBox text="COVID-19 caused India's GDP to contract 6.6% in 2020-21, yet infra budget recovered sharply to ₹7.5L Cr in 2021-22." color={C.green} />
+        </ChartBox>
+      </div>
+
+      <div style={{ marginTop: 12, padding: "10px 16px", background: "#0F172A", borderRadius: 8, border: `1px solid ${C.cardBorder}` }}>
+        <p style={{ color: C.muted, fontSize: 10, margin: 0 }}>
+          📌 <strong style={{ color: C.text }}>Data Source:</strong> Ministry of Road Transport & Highways (MoRTH) | PIB India | Airports Authority of India (AAI) | Indian Railways Annual Report | Union Budget Documents 2013-2025
+        </p>
+      </div>
+    </div>
+  );
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PAGE 2 — ROADS
+// ════════════════════════════════════════════════════════════════════════════
+const PageRoads = ({ yearFilter, setYearFilter }) => {
+  const data = yearFilter ? roadsData.filter(d => d.year === yearFilter) : roadsData;
+
+  return (
+    <div>
+      <YearSlicer years={roadsData.map(d => d.year)} selected={yearFilter} onChange={setYearFilter} color={C.orange} />
+
+      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <KpiCard label="NH Constructed 2014–24" value="~55K km" sub="Total new highways built" color={C.orange} icon="🏗️" trend="Enough to circle Earth 1.4x" />
+        <KpiCard label="Construction Speed" value="11.6→34 km/day" sub="FY2014 vs FY2024" color={C.yellow} icon="⚡" trend="3x faster in 10 years" />
+        <KpiCard label="4-Lane Highways" value="18,278→45,947 km" sub="+151% growth" color={C.red} icon="🛣️" trend="2.5x expansion" />
+        <KpiCard label="High Speed Corridors" value="93→2,474 km" sub="2014 vs 2024" color={C.blue} icon="🚗" trend="26x increase" />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+        <ChartBox title="NH Constructed per Year (km)" subtitle="Annual highway construction output" color={C.orange} span={2}>
+          <ResponsiveContainer width="100%" height={230}>
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 10 }} />
+              <YAxis tick={{ fill: C.muted, fontSize: 10 }} />
+              <Tooltip content={<CustomTooltip unit=" km" />} />
+              <Bar dataKey="nhBuilt" name="KM Constructed" radius={[4, 4, 0, 0]}>
+                {data.map((e, i) => (
+                  <Cell key={i} fill={e.nhBuilt >= 12000 ? "#00D68F" : e.nhBuilt >= 9000 ? C.orange : C.red} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+          <InsightBox text="FY2020-21 was the record year — 13,327 km built despite COVID. The target vs achievement gap narrowed every year post-2017." color={C.orange} />
+        </ChartBox>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+        <ChartBox title="Construction Speed (km/day)" subtitle="How fast India builds roads — trending up" color={C.yellow}>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 9 }} />
+              <YAxis tick={{ fill: C.muted, fontSize: 10 }} domain={[0, 45]} />
+              <Tooltip content={<CustomTooltip unit=" km/day" />} />
+              <Line type="monotone" dataKey="speedKmDay" name="Speed" stroke={C.yellow} strokeWidth={3} dot={{ fill: C.yellow, r: 4 }} />
+              <ReferenceLine y={34} stroke={C.green} strokeDasharray="4 4" label={{ value: "2024: 34 km/day", fill: C.green, fontSize: 10 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartBox>
+
+        <ChartBox title="4-Lane vs High Speed Corridors" subtitle="Quality upgrade of India's road network" color={C.blue}>
+          <ResponsiveContainer width="100%" height={200}>
+            <ComposedChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 9 }} />
+              <YAxis yAxisId="l" tick={{ fill: C.muted, fontSize: 10 }} />
+              <YAxis yAxisId="r" orientation="right" tick={{ fill: C.muted, fontSize: 10 }} />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar yAxisId="l" dataKey="fourLane" name="4-Lane (km)" fill={C.blue} opacity={0.8} radius={[3, 3, 0, 0]} />
+              <Line yAxisId="r" type="monotone" dataKey="highSpeed" name="High Speed (km)" stroke={C.yellow} strokeWidth={2} dot={{ fill: C.yellow, r: 3 }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </ChartBox>
+      </div>
+
+      <ChartBox title="NH Total Network Growth" subtitle="Cumulative national highway length (km)" color={C.green}>
+        <ResponsiveContainer width="100%" height={180}>
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="gradOrange" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={C.orange} stopOpacity={0.4} />
+                <stop offset="95%" stopColor={C.orange} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+            <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 9 }} />
+            <YAxis tick={{ fill: C.muted, fontSize: 10 }} domain={[85000, 155000]} />
+            <Tooltip content={<CustomTooltip unit=" km" />} />
+            <Area type="monotone" dataKey="nhTotal" name="Total NH Length" stroke={C.orange} fill="url(#gradOrange)" strokeWidth={2} />
+          </AreaChart>
+        </ResponsiveContainer>
+        <InsightBox text="India's NH network grew 60% — from 91,287 km in 2014 to 1,46,204 km in 2024. India is now the world's 2nd largest road network." color={C.green} />
+      </ChartBox>
+    </div>
+  );
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PAGE 3 — RAILWAYS
+// ════════════════════════════════════════════════════════════════════════════
+const PageRailways = ({ yearFilter, setYearFilter }) => {
+  const data = yearFilter ? railData.filter(d => d.year === yearFilter) : railData;
+
+  const elecGauge = [{ name: "Electrified", value: 97 }, { name: "Remaining", value: 3 }];
+
+  return (
+    <div>
+      <YearSlicer years={railData.map(d => d.year)} selected={yearFilter} onChange={setYearFilter} color={C.green} />
+
+      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <KpiCard label="Electrification 2024" value="97%" sub="38% in 2013-14" color={C.green} icon="⚡" trend="46,900 RKM added since 2014" />
+        <KpiCard label="Electrification Speed" value="1.4→18 km/day" sub="2004-14 vs 2022-23" color={C.yellow} icon="🔌" trend="13x faster pace" />
+        <KpiCard label="Freight Loading" value="1,617 MT" sub="vs 1,051 MT in 2013-14" color={C.blue} icon="🚛" trend="+54% increase" />
+        <KpiCard label="Vande Bharat Trains" value="136" sub="Running as of Dec 2024" color={C.orange} icon="🚄" trend="0 in 2021 → 136 in 2024" />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+        <ChartBox title="Railway Electrification Journey" subtitle="Cumulative RKM electrified — march to 100%" color={C.green} span={2}>
+          <ResponsiveContainer width="100%" height={230}>
+            <AreaChart data={data}>
+              <defs>
+                <linearGradient id="gradGreen" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={C.green} stopOpacity={0.35} />
+                  <stop offset="95%" stopColor={C.green} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 10 }} />
+              <YAxis tick={{ fill: C.muted, fontSize: 10 }} />
+              <Tooltip content={<CustomTooltip unit=" RKM" />} />
+              <Area type="monotone" dataKey="cumElec" name="Cumulative Electrified (RKM)" stroke={C.green} fill="url(#gradGreen)" strokeWidth={2} dot={{ fill: C.green, r: 3 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+          <InsightBox text="In 70 years before 2014, India electrified 21,801 km. In just 10 years after 2014 — 46,900 km. A 10x acceleration in pace." color={C.green} />
+        </ChartBox>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+        <ChartBox title="Electrification % per Year" subtitle="Percentage of BG network electrified" color={C.yellow}>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 9 }} />
+              <YAxis tick={{ fill: C.muted, fontSize: 10 }} domain={[30, 105]} />
+              <Tooltip content={<CustomTooltip unit="%" />} />
+              <Line type="monotone" dataKey="electrifiedPct" name="Electrified %" stroke={C.yellow} strokeWidth={3} dot={{ fill: C.yellow, r: 4 }} />
+              <ReferenceLine y={100} stroke={C.green} strokeDasharray="4 4" label={{ value: "Target: 100%", fill: C.green, fontSize: 10 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartBox>
+
+        <ChartBox title="Freight Loading Growth (MT)" subtitle="Metric Tonnes — economic backbone" color={C.blue}>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 9 }} />
+              <YAxis tick={{ fill: C.muted, fontSize: 10 }} domain={[900, 1800]} />
+              <Tooltip content={<CustomTooltip unit=" MT" />} />
+              <Bar dataKey="freight" name="Freight (MT)" fill={C.blue} radius={[4, 4, 0, 0]} opacity={0.85} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartBox>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        <ChartBox title="Railway Budget Allocation (₹ Cr)" subtitle="Annual railway investment" color={C.orange}>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={data}>
+              <defs>
+                <linearGradient id="gradOr2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={C.orange} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={C.orange} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 9 }} />
+              <YAxis tick={{ fill: C.muted, fontSize: 10 }} />
+              <Tooltip content={<CustomTooltip unit=" Cr" />} />
+              <Area type="monotone" dataKey="budget" name="Budget (₹ Cr)" stroke={C.orange} fill="url(#gradOr2)" strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartBox>
+
+        <ChartBox title="Vande Bharat Train Rollout" subtitle="Modern train fleet expansion" color={C.purple}>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={railData.filter(d => d.fy >= 2022)}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 10 }} />
+              <YAxis tick={{ fill: C.muted, fontSize: 10 }} />
+              <Tooltip content={<CustomTooltip unit=" trains" />} />
+              <Bar dataKey="vandeBharat" name="Vande Bharat Trains" fill={C.purple} radius={[4, 4, 0, 0]}>
+                {railData.filter(d => d.fy >= 2022).map((e, i) => <Cell key={i} fill={C.purple} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+          <InsightBox text="From 0 to 136 Vande Bharat trains in under 3 years. Running across 333 districts, transforming passenger experience nationwide." color={C.purple} />
+        </ChartBox>
+      </div>
+    </div>
+  );
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PAGE 4 — AIRPORTS
+// ════════════════════════════════════════════════════════════════════════════
+const PageAirports = ({ yearFilter, setYearFilter }) => {
+  const data = yearFilter ? airportData.filter(d => d.year === yearFilter) : airportData;
+
+  return (
+    <div>
+      <YearSlicer years={airportData.map(d => d.year)} selected={yearFilter} onChange={setYearFilter} color={C.purple} />
+
+      <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+        <KpiCard label="Airports Doubled" value="74 → 157" sub="2014 to 2024" color={C.purple} icon="🏗️" trend="+112% in 10 years" />
+        <KpiCard label="Domestic Passengers" value="61M → 172M" sub="+182% growth" color={C.blue} icon="🧳" trend="3rd largest aviation market" />
+        <KpiCard label="UDAN Routes" value="583" sub="0 in 2016 at launch" color={C.yellow} icon="🗺️" trend="39 states connected" />
+        <KpiCard label="COVID Recovery" value="172M (2024)" sub="vs 154M pre-COVID (2019)" color={C.green} icon="📈" trend="Full recovery + new record" />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+        <ChartBox title="Domestic Passenger Traffic (Million)" subtitle="Rise, COVID crash, and full recovery" color={C.blue} span={2}>
+          <ResponsiveContainer width="100%" height={230}>
+            <AreaChart data={data}>
+              <defs>
+                <linearGradient id="gradPurple" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={C.purple} stopOpacity={0.4} />
+                  <stop offset="95%" stopColor={C.purple} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 10 }} />
+              <YAxis tick={{ fill: C.muted, fontSize: 10 }} />
+              <Tooltip content={<CustomTooltip unit=" M passengers" />} />
+              <Area type="monotone" dataKey="passengers" name="Passengers (Million)" stroke={C.purple} fill="url(#gradPurple)" strokeWidth={2} dot={(props) => {
+                const { cx, cy, payload } = props;
+                return payload.year === "2020"
+                  ? <circle key="covid" cx={cx} cy={cy} r={6} fill={C.red} stroke={C.red} />
+                  : <circle key={payload.year} cx={cx} cy={cy} r={3} fill={C.purple} />;
+              }} />
+              <ReferenceLine x="2020" stroke={C.red} strokeDasharray="4 4" label={{ value: "COVID-19", fill: C.red, fontSize: 10 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+          <InsightBox text="COVID crashed passengers from 154M (2019) to just 52M (2020). India's aviation bounced back to 172M by 2024 — a new all-time record." color={C.red} />
+        </ChartBox>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+        <ChartBox title="Operational Airports Count" subtitle="Growth of India's airport infrastructure" color={C.purple}>
+          <ResponsiveContainer width="100%" height={200}>
+            <ComposedChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 9 }} />
+              <YAxis yAxisId="l" tick={{ fill: C.muted, fontSize: 10 }} domain={[60, 175]} />
+              <YAxis yAxisId="r" orientation="right" tick={{ fill: C.muted, fontSize: 10 }} />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar yAxisId="r" dataKey="newAdded" name="New Airports" fill={C.yellow} opacity={0.7} radius={[3, 3, 0, 0]} />
+              <Line yAxisId="l" type="monotone" dataKey="airports" name="Total Airports" stroke={C.purple} strokeWidth={3} dot={{ fill: C.purple, r: 4 }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </ChartBox>
+
+        <ChartBox title="UDAN Routes Expansion" subtitle="Connecting India's smaller cities to aviation" color={C.yellow}>
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={data}>
+              <defs>
+                <linearGradient id="gradYellow" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={C.yellow} stopOpacity={0.4} />
+                  <stop offset="95%" stopColor={C.yellow} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={C.grid} />
+              <XAxis dataKey="year" tick={{ fill: C.muted, fontSize: 9 }} />
+              <YAxis tick={{ fill: C.muted, fontSize: 10 }} />
+              <Tooltip content={<CustomTooltip unit=" routes" />} />
+              <Area type="monotone" dataKey="udanRoutes" name="UDAN Routes" stroke={C.yellow} fill="url(#gradYellow)" strokeWidth={2} dot={{ fill: C.yellow, r: 3 }} />
+            </AreaChart>
+          </ResponsiveContainer>
+          <InsightBox text="UDAN launched in 2016 with 0 routes. By 2024, 583 routes connect 39 states — giving first-time flyers access to skies once only for the privileged." color={C.yellow} />
+        </ChartBox>
+      </div>
+
+      <ChartBox title="States Connected by Air" subtitle="Regional aviation connectivity expansion" color={C.green}>
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={data} layout="vertical">
+            <CartesianGrid strokeDasharray="3 3" stroke={C.grid} horizontal={false} />
+            <XAxis type="number" tick={{ fill: C.muted, fontSize: 10 }} domain={[25, 42]} />
+            <YAxis type="category" dataKey="year" tick={{ fill: C.muted, fontSize: 9 }} width={40} />
+            <Tooltip content={<CustomTooltip unit=" states" />} />
+            <Bar dataKey="statesConnected" name="States Connected" fill={C.green} radius={[0, 4, 4, 0]} opacity={0.85} />
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartBox>
+    </div>
+  );
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+//  ROOT APP
+// ════════════════════════════════════════════════════════════════════════════
+export default function App() {
+  const [activePage, setActivePage] = useState(0);
+  const [yearFilter, setYearFilter] = useState(null);
+
+  // reset filter on page change
+  const handlePageChange = (i) => {
+    setActivePage(i);
+    setYearFilter(null);
+  };
+
+  const pageColor = PAGE_COLORS[activePage];
+
+  return (
+    <div style={{
+      background: C.bg, minHeight: "100vh", fontFamily: "'Segoe UI', sans-serif",
+      color: C.text, padding: "20px 24px"
+    }}>
+      {/* Header */}
+      <div style={{ marginBottom: 20, borderBottom: `1px solid ${C.cardBorder}`, paddingBottom: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 8 }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+              <span style={{ fontSize: 24 }}>🇮🇳</span>
+              <h1 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: C.text }}>
+                India's Infrastructure Decade
+              </h1>
+              <span style={{
+                background: `${pageColor}20`, color: pageColor,
+                border: `1px solid ${pageColor}40`, borderRadius: 20,
+                fontSize: 10, fontWeight: 700, padding: "3px 10px", letterSpacing: 1
+              }}>2014 – 2024</span>
+            </div>
+            <p style={{ color: C.muted, fontSize: 12, margin: 0 }}>
+              Roads · Railways · Airports — A Decade of Nation Building | Real Data from MoRTH, PIB, AAI, Indian Railways
+            </p>
+          </div>
+          <div style={{ textAlign: "right" }}>
+            <p style={{ color: C.muted, fontSize: 10, margin: 0 }}>Built by Vivek | Power BI Portfolio Project</p>
+            <p style={{ color: pageColor, fontSize: 10, margin: "2px 0 0 0", fontWeight: 700 }}>Data Analyst Journey · Day 6</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Page Navigator */}
+      <PageNav active={activePage} setActive={handlePageChange} />
+
+      {/* Page Content */}
+      {activePage === 0 && <PageOverview yearFilter={yearFilter} setYearFilter={setYearFilter} />}
+      {activePage === 1 && <PageRoads yearFilter={yearFilter} setYearFilter={setYearFilter} />}
+      {activePage === 2 && <PageRailways yearFilter={yearFilter} setYearFilter={setYearFilter} />}
+      {activePage === 3 && <PageAirports yearFilter={yearFilter} setYearFilter={setYearFilter} />}
+
+      {/* Footer Nav */}
+      <div style={{ marginTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <button
+          onClick={() => handlePageChange(Math.max(0, activePage - 1))}
+          disabled={activePage === 0}
+          style={{
+            padding: "9px 20px", borderRadius: 8, border: `1px solid ${C.cardBorder}`,
+            background: activePage === 0 ? "transparent" : C.card,
+            color: activePage === 0 ? C.muted : C.text, cursor: activePage === 0 ? "not-allowed" : "pointer",
+            fontSize: 12, fontWeight: 600
+          }}>
+          ← {activePage > 0 ? PAGES[activePage - 1] : "Previous"}
+        </button>
+
+        <div style={{ display: "flex", gap: 8 }}>
+          {PAGES.map((_, i) => (
+            <div key={i} onClick={() => handlePageChange(i)} style={{
+              width: i === activePage ? 24 : 8, height: 8, borderRadius: 4,
+              background: i === activePage ? PAGE_COLORS[i] : C.cardBorder,
+              cursor: "pointer", transition: "all 0.3s"
+            }} />
+          ))}
+        </div>
+
+        <button
+          onClick={() => handlePageChange(Math.min(PAGES.length - 1, activePage + 1))}
+          disabled={activePage === PAGES.length - 1}
+          style={{
+            padding: "9px 20px", borderRadius: 8, border: `1px solid ${activePage < PAGES.length - 1 ? pageColor : C.cardBorder}`,
+            background: activePage < PAGES.length - 1 ? `${pageColor}20` : "transparent",
+            color: activePage < PAGES.length - 1 ? pageColor : C.muted,
+            cursor: activePage < PAGES.length - 1 ? "pointer" : "not-allowed",
+            fontSize: 12, fontWeight: 600
+          }}>
+          {activePage < PAGES.length - 1 ? PAGES[activePage + 1] : "Next"} →
+        </button>
+      </div>
+    </div>
+  );
+}
